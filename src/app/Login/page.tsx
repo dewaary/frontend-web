@@ -1,59 +1,47 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
 import { useState, FormEvent } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { useUser } from "@/context/UserContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Login() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const { setUser } = useUser();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const router = useRouter();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-  
+    setIsLoading(true);
+
     try {
       const response = await axios.post("http://127.0.0.1:8000/api/login", {
         email,
         password,
       });
-  
+
+      setIsLoading(true);
+
       if (response.status === 200) {
+        setIsLoading(false);
         toast.success("Login successful!", {
           position: "top-right",
           autoClose: 2000,
         });
-  
+
         const token = response.data.token;
         localStorage.setItem("token", token);
-        const profileResponse = await axios.get("http://127.0.0.1:8000/api/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        console.log("RESPONSE IMAGE", profileResponse?.data?.data?.profile_image)
-  
-        if (profileResponse.status === 200) {
-          setUser({
-            name: profileResponse?.data?.data?.name,
-            email: profileResponse?.data?.data?.email,
-            image: profileResponse?.data?.data?.profile_image || '',
-          });
-        }
-  
         setTimeout(() => {
-          router.push("/Profile");
+          router.push("/OTP");
         }, 2000);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      setIsLoading(false);
       const errorMessage = error.response?.data?.message || "Login failed";
       toast.error(errorMessage, {
         position: "top-right",
@@ -61,7 +49,7 @@ export default function Login() {
       });
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-blue-600">
       <div className="bg-white p-10 rounded-lg shadow-lg max-w-md w-full">
@@ -87,7 +75,8 @@ export default function Login() {
           />
           <button
             type="submit"
-            className="py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all duration-300 shadow-lg flex justify-center items-center"
+            disabled={isLoading}
           >
             Login
           </button>

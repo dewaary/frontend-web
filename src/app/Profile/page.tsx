@@ -1,22 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/context/UserContext";
 import axios from "axios";
 import Image from "next/image";
 
+interface ProfileData {
+  name?: string;
+  profile_image?: string;
+}
+
 export default function Profile() {
   const router = useRouter();
-  const { name, setUser, image } = useUser();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
+  const getDataProfile = async () => {
+    try {
+      const profileResponse = await axios.get("http://127.0.0.1:8000/api/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (profileResponse.status === 200) {
+        setProfileData(profileResponse.data.data);
+      } else {
+        console.error("Profile Response Error:", profileResponse);
+      }
+    } catch (err) {
+      console.error("Error fetching profile data:", err);
+    }
+  };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/Login");
-    }
-  }, [router]);
+    getDataProfile();
+  }, []);
+
 
   const handleLogout = async () => {
     const confirmLogout = confirm("Are you sure you want to logout?");
@@ -32,8 +53,6 @@ export default function Profile() {
         });
 
         localStorage.removeItem("token");
-        setUser(null);
-
         router.push("/Login");
       } catch (error: any) {
         alert("Logout failed. Please try again.");
@@ -41,25 +60,7 @@ export default function Profile() {
     }
   };
 
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      const confirmBack = confirm("Are you sure you want to leave this page?");
-      if (confirmBack) {
-        return true;
-      } else {
-        event.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
-  console.log("RESPONSE IMAGE", image);
+  console.log(profileData)
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-blue-600">
@@ -67,17 +68,19 @@ export default function Profile() {
         <h2 className="text-4xl font-bold text-center mb-8 text-gray-800">
           Profile
         </h2>
-        {image && (
-        <Image 
-          src={`http://localhost:8000/storage/${image}`}
-          alt="Profile" 
-          width={96} 
-          height={96} 
-          className="rounded-full w-24 h-24 mx-auto mb-4" 
-        />
-      )}
+        {profileData?.profile_image && (
+          <Image 
+            src={`http://localhost:8000/storage/${profileData?.profile_image}`}
+            alt="Profile" 
+            width={96} 
+            height={96} 
+            className="rounded-full w-24 h-24 mx-auto mb-4" 
+          />
+        )}
         <p className="text-lg text-gray-700">Welcome to your profile!</p>
-        <p className="text-lg text-gray-700">{name}</p>
+        {profileData?.name && (
+          <p className="text-lg text-gray-700">{profileData.name}</p>
+        )}
 
         <button
           onClick={handleLogout}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, FormEvent } from "react";
@@ -6,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useUser } from "@/context/UserContext";
 
 export default function Register() {
   const [email, setEmail] = useState<string>("");
@@ -15,7 +15,6 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { setUser } = useUser(); 
   const router = useRouter();
 
   const handleRegister = async (e: FormEvent) => {
@@ -46,7 +45,7 @@ export default function Register() {
 
       if (response.status === 200) {
         setIsLoading(false);
-        toast.success("Registration successful! Check your email for OTP.", {
+        toast.success("Registration successful!.", {
           position: "top-right",
           autoClose: 2000,
         });
@@ -54,7 +53,7 @@ export default function Register() {
         localStorage.setItem('token', response.data.token);
         
         setTimeout(() => {
-          router.push("/OTP");
+          router.push("/Login");
         }, 2000);
       }
     } catch (error: any) {
@@ -131,8 +130,6 @@ export default function Register() {
             Login
           </Link>
         </p>
-
-        {/* Komponen toast untuk notifikasi */}
         <ToastContainer />
       </div>
     </div>
